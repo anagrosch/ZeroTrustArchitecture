@@ -2,11 +2,12 @@
 
 # keycloak_config.py
 
-KEYCLOAK_SERVER_URL = "http://localhost:8080/auth"
+HOST_IP_ADDR = "localhost" #redacted
+KEYCLOAK_SERVER_URL = f"http://{HOST_IP_ADDR}:8080/"
 KEYCLOAK_REALM = "myrealm"
 KEYCLOAK_CLIENT_ID = "ZeroTrustPlatform"
-KEYCLOAK_CLIENT_SECRET = "MjxEIkuDnbL0ej2rJWv3qEV8TiI967qj"
-KEYCLOAK_ADMIN_CLIENT_SECRET = "nLpkVYMQ0cKCLv2VdZfFfwjxw9rcquNG"
+KEYCLOAK_CLIENT_SECRET = "kz1gXUWTkU6gZJNy7gezdFh2eHx57iUw" #must update for ZeroTrustPlatform
+KEYCLOAK_ADMIN_CLIENT_SECRET = "8zbAPYwbLfGXHI02HoORBzHkUNxJu5Sc" #must update for admin-cli
 
 SERVER_URL = f"{KEYCLOAK_SERVER_URL}/realms/{KEYCLOAK_REALM}/.well-known/openid-configuration"
 API_BASE_URL = f"{KEYCLOAK_SERVER_URL}/realms/{KEYCLOAK_REALM}/protocol/openid-connect"

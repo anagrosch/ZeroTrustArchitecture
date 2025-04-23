@@ -48,7 +48,7 @@ app.config.update({
 })
 
 keycloak_connection = KeycloakOpenIDConnection(
-                        server_url="http://localhost:8080/auth/",
+                        server_url=KEYCLOAK_SERVER_URL,
                         username='admin',
                         password='admin',
                         realm_name="myrealm",
@@ -62,7 +62,7 @@ keycloak_admin = KeycloakAdmin(connection=keycloak_connection)
 oidc = OpenIDConnect(app)
 
 # Configure client using the python-kcloak library
-keycloak_openid = KeycloakOpenID(server_url="http://localhost:8080/auth/",
+keycloak_openid = KeycloakOpenID(server_url=KEYCLOAK_SERVER_URL,
                                  client_id=KEYCLOAK_CLIENT_ID,
                                  realm_name=KEYCLOAK_REALM,
                                  client_secret_key=KEYCLOAK_CLIENT_SECRET)
@@ -673,4 +673,4 @@ def view_access_requests():
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
-    app.run(debug=True)
+    app.run(debug=True, host=HOST_IP_ADDR)

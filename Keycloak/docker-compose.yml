@@ -2,20 +2,24 @@ name: docker-stack
 services:
   keycloak:
     command:
-    - start
-    - --auto-build
+    - start-dev
     container_name: keycloak
     depends_on:
       postgres:
         condition: service_started
     environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: <usr> #redacted
+      KC_BOOTSTRAP_ADMIN_PASSWORD: <pwrd> #redacted
+
       KC_DB: postgres
-      KC_DB_PASSWORD: <redacted>
+      KC_DB_USERNAME: <postgres-usr> #redacted
+      KC_DB_PASSWORD: <postgres-pwrd> #redacted
       KC_DB_URL_DATABASE: keycloak
       KC_DB_URL_HOST: postgres
-      KC_DB_USERNAME: <redacted>
-      KC_HOSTNAME: <redacted>
+      KC_HOSTNAME: <host> #redacted
       KC_PROXY: edge
+    ports:
+      - "8080:8080"
     hostname: keycloak
     image: quay.io/keycloak/keycloak:latest
     networks:
@@ -24,19 +28,23 @@ services:
     restart: always
     volumes:
     - type: bind
-      source: /home/docker/docker-stack/keycloak/volumes/opt/keycloak/providers
+      source: <path>/docker-stack/keycloak/volumes/opt/keycloak/providers #path redacted
       target: /opt/keycloak/providers
       bind:
         create_host_path: true
   postgres:
     hostname: postgres # I build my own postgres image, but the standard one should work, too.
-    image: local/postgres
+    image: postgres:14
     networks:
       postgresql: null
     restart: always
+    environment:
+      POSTGRES_USER: <postgres-usr> #redacted
+      POSTGRES_PASSWORD: <postgres-pwrd> #redacted
+      POSTGRES_DB: keycloak
     volumes:
     - type: bind
-      source: /home/docker/docker-stack/postgres/volumes/14/data
+      source: <path>/docker-stack/postgres/volumes/14/data #path redacted
       target: /var/lib/postgresql/data
       bind:
         create_host_path: true

@@ -34,5 +34,50 @@
         "email_verified": true,
         "totp_enabled": false,
         "user_role": "Security Viewer"
+    },
+    {
+        "user_id": "54fce10a-ddfe-4f19-aaae-06fb354e5a4c",
+        "username": "user_demo1",
+        "email": "user.demo1@leotech.cns",
+        "created_timestamp": 1745350246481,
+        "email_verified": true,
+        "totp_enabled": false,
+        "user_role": "Policy Administrator"
+    },
+    {
+        "user_id": "746306b8-d208-4ccc-9f98-423bdf7592c6",
+        "username": "user_demo2",
+        "email": "demo2@example.com",
+        "created_timestamp": 1745350296624,
+        "email_verified": true,
+        "totp_enabled": false,
+        "user_role": "Approver"
+    },
+    {
+        "user_id": "08b14bcd-9f63-410f-b7fd-8279397910c7",
+        "username": "user_ap",
+        "email": "demo4@approver.com",
+        "created_timestamp": 1745361222002,
+        "email_verified": true,
+        "totp_enabled": false,
+        "user_role": "Approver"
+    },
+    {
+        "user_id": "a46d44d4-2351-4e5e-96d8-badae43a3da2",
+        "username": "user_pa",
+        "email": "policy87@administrator.com",
+        "created_timestamp": 1745361252215,
+        "email_verified": true,
+        "totp_enabled": false,
+        "user_role": "Policy Administrator"
+    },
+    {
+        "user_id": "ca3e599e-f20f-45f9-b8ce-bede9c5a4166",
+        "username": "user_sv",
+        "email": "security@viewer.com",
+        "created_timestamp": 1745361181821,
+        "email_verified": true,
+        "totp_enabled": false,
+        "user_role": "Security Viewer"
     }
 ]
