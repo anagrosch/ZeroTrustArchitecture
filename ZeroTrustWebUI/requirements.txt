@@ -1,0 +1,13 @@
+requests>=2.26.0
+docutils~=0.21.2
+importlib-metadata~=8.0
+packaging~=24.0
+reportlab~=4.0
+pyyaml~=6.0
+pypi-json
+flask
+flask-oidc
+flask-sqlalchemy
+python-keycloak
+tss
+p2pnetwork
