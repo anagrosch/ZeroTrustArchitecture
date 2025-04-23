@@ -16,7 +16,7 @@ services:
       KC_DB_PASSWORD: <postgres-pwrd> #redacted
       KC_DB_URL_DATABASE: keycloak
       KC_DB_URL_HOST: postgres
-      KC_HOSTNAME: <host> #redacted
+      KC_HOSTNAME: <localhost> #redacted
       KC_PROXY: edge
     ports:
       - "8080:8080"
@@ -33,7 +33,7 @@ services:
       bind:
         create_host_path: true
   postgres:
-    hostname: postgres # I build my own postgres image, but the standard one should work, too.
+    hostname: postgres
     image: postgres:14
     networks:
       postgresql: null

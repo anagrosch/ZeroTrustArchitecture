@@ -14,10 +14,18 @@ from ZeroTrustWebUI.trust_signal_collection import *
 class Networking(Node):
     #Define a dictionary of the node roles based on their node.id attributes
     NODE_ROLE = {
-        '1': 'Access Proxy Node',
+        '1':'Access Proxy Node',
         '2':'Trust Engine Node',
         '3':'Policy Engine Node',
         '4':'Web UI'
+    }
+
+    #Define a dictionary of the node [host, port] based on their node.id attributes
+    NODE_CONNECT = {
+        '1':['127.0.0.1', 8001],
+        '2':['127.0.0.1', 8002],
+        '3':['127.0.0.1', 8003],
+        '4':['127.0.0.1', 8004]
     }
 
     # Python class constructor to initialize the class Networking
@@ -26,9 +34,8 @@ class Networking(Node):
         print(f"\n{self.get_node_role(self.id)} STARTED on {self.host}:{self.port}")
     
     #Define a function to extract the name of a node based on it's node.id attribute
-    def get_node_role(self,node_id):
+    def get_node_role(self, node_id):
         return self.NODE_ROLE.get(node_id,'UNKNOWN ROLE')
-    
 
     def send_message_to_node(self, node_id, message):
         # Find the specific node by its ID
@@ -123,8 +130,6 @@ class Networking(Node):
             user_identity_data = get_user_identity_data_by_id(user_id,'user_data.json')
             user_auth_data = get_latest_auth_data(user_id, 'auth_data.json')
             user_access_request = get_latest_access_request(user_id, 'access_requests.json')
-
-            access_request_time_str = user_access_request.get('access_request_time', '')
 
             # Convert the string time to a datetime object
             access_request_time_str = user_access_request.get('access_request_time', '')

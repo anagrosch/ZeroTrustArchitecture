@@ -5,7 +5,7 @@ sys.path.insert(0, '..') # Import the files where the modules are located
 from Networking import Networking
 
 #Create an instance of this node
-node_1 = Networking("127.0.0.1", 8001, 1)
+node_1 = Networking(Networking.NODE_CONNECT['1'][0], Networking.NODE_CONNECT['1'][1], 1)
 
 #Start the node
 node_1.start()
@@ -15,9 +15,9 @@ debug = False
 node_1.debug =debug
 
 #Connect with node 2
-node_1.connect_with_node('127.0.0.1', 8002)
-node_1.connect_with_node('127.0.0.1',8003)
-node_1.connect_with_node('127.0.0.1',8004)
+node_1.connect_with_node(Networking.NODE_CONNECT['2'][0], Networking.NODE_CONNECT['2'][1])
+node_1.connect_with_node(Networking.NODE_CONNECT['3'][0], Networking.NODE_CONNECT['3'][1])
+node_1.connect_with_node(Networking.NODE_CONNECT['4'][0], Networking.NODE_CONNECT['4'][1])
 
 try:
     #Start a loop to keep sending messages between node 1 and node 2

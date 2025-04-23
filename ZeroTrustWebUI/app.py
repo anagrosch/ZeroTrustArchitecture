@@ -284,15 +284,15 @@ def receive_and_process_access_request():
             json.dump(existing_data, file, indent=4)
 
     except IOError as e:
-        print(f"Error  occured while loading the json data {e}")
+        print(f"Error occured while loading the json data {e}")
     
     #send the access request data to the AP in the peer to peer network of nodes
 
     #first create an instance of the Networking class
-    node4 = Networking("127.0.0.1",8004,4)
+    node4 = Networking(Networking.NODE_CONNECT['4'][0], Networking.NODE_CONNECT['4'][1],4)
     node4.start()
-    node4.connect_with_node('127.0.0.1',8001) #connect with the access proxy
-    node4.connect_with_node('127.0.0.1',8003) # connect with the policy engine
+    node4.connect_with_node(Networking.NODE_CONNECT['1'][0],Networking.NODE_CONNECT['1'][1]) #connect with the access proxy
+    node4.connect_with_node(Networking.NODE_CONNECT['3'][0],Networking.NODE_CONNECT['3'][1]) # connect with the policy engine
     node4.send_message_to_node('1',access_request)  #send access request to access proxy
 
     access_decision = get_latest_access_decision()

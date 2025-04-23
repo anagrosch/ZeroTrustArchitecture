@@ -12,10 +12,18 @@ from p2pnetwork.node import Node
 class Networking(Node):
     #Define a dictionary of the node roles based on their node.id attributes
     NODE_ROLE = {
-        '1': 'Access Proxy Node',
+        '1':'Access Proxy Node',
         '2':'Trust Engine Node',
         '3':'Policy Engine Node',
         '4':'Web UI'
+    }
+
+    #Define a dictionary of the node [host, port] based on their node.id attributes
+    NODE_CONNECT = {
+        '1':['127.0.0.1', 8001],
+        '2':['127.0.0.1', 8002],
+        '3':['127.0.0.1', 8003],
+        '4':['127.0.0.1', 8004]
     }
 
     # Python class constructor to initialize the class Networking
