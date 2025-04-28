@@ -1,0 +1,4 @@
+pyyaml~=6.0
+pypi-json
+filelock
+p2pnetwork

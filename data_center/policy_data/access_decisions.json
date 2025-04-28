@@ -1,0 +1,30 @@
+[
+    {
+        "ID": 1,
+        "user_id": "a46d44d4-2351-4e5e-96d8-badae43a3da2",
+        "intent": "request_access_decision",
+        "user_trust_score": 0.7210000000000001,
+        "access_decision": 1
+    },
+    {
+        "ID": 2,
+        "user_id": "a46d44d4-2351-4e5e-96d8-badae43a3da2",
+        "intent": "request_access_decision",
+        "user_trust_score": 0.7210000000000001,
+        "access_decision": 1
+    },
+    {
+        "ID": 3,
+        "user_id": "a46d44d4-2351-4e5e-96d8-badae43a3da2",
+        "intent": "request_access_decision",
+        "user_trust_score": 0.7210000000000001,
+        "access_decision": 1
+    },
+    {
+        "ID": 4,
+        "user_id": "a46d44d4-2351-4e5e-96d8-badae43a3da2",
+        "intent": "request_access_decision",
+        "user_trust_score": 0.7210000000000001,
+        "access_decision": 1
+    }
+]

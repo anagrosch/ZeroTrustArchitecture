@@ -1,0 +1,3 @@
+pyyaml~=6.0
+pypi-json
+p2pnetwork
