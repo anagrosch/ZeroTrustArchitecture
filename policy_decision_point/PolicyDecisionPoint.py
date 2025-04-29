@@ -16,7 +16,7 @@ node_2.debug = debug
 #Connect with node 1
 node_2.connect_with_node(Networking.NODE_CONNECT['1'][0], Networking.NODE_CONNECT['1'][0]) #node 1
 node_2.connect_with_node(Networking.NODE_CONNECT['3'][0], Networking.NODE_CONNECT['3'][1]) #node 3
-node_2.connect_with_node(Networking.NODE_CONNECT['5'][0], Networking.NODE_CONNECT['5'][1]) #node 5
+node_2.connect_with_node(Networking.NODE_CONNECT['4'][0], Networking.NODE_CONNECT['4'][1]) #node 4
 
 while True:
 

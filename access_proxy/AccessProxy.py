@@ -12,7 +12,6 @@ node_1.debug = debug
 #Connect with node 2
 node_1.connect_with_node(Networking.NODE_CONNECT['3'][0], Networking.NODE_CONNECT['3'][1]) #node 3
 node_1.connect_with_node(Networking.NODE_CONNECT['4'][0], Networking.NODE_CONNECT['4'][1]) #node 4
-node_1.connect_with_node(Networking.NODE_CONNECT['5'][0], Networking.NODE_CONNECT['5'][1]) #node 5
 node_1.connect_with_node(Networking.NODE_CONNECT['2'][0], Networking.NODE_CONNECT['2'][1]) #node 2
 
 try:

@@ -12,10 +12,9 @@ class Networking(Node):
     # Define a dictionary of the node roles based on their node.id attributes
     NODE_ROLE = {
         '1': 'Access Proxy Node',
-        '2': 'Trust Engine Node',
-        '3': 'Policy Engine Node',
-        '4': 'Web UI',
-        '5': 'Data Center Node'
+        '2': 'Policy Decision Point Node',
+        '3': 'Data Center Node',
+        '4': 'Web UI'
     }
 
     # Define a dictionary of the node [host, port] based on their node.id attributes
@@ -23,8 +22,7 @@ class Networking(Node):
         '1': ['127.0.0.1', 8001],
         '2': ['127.0.0.1', 8002],
         '3': ['127.0.0.1', 8003],
-        '4': ['127.0.0.1', 8004],
-        '5': ['127.0.0.1', 8005]
+        '4': ['127.0.0.1', 8004]
     }
 
     # Python class constructor to initialize the class Networking
@@ -49,7 +47,10 @@ class Networking(Node):
         self.received_message.update(message)  # Setter method to initialize the variable with the message
 
     def del_received_message_item(self, key):
-        self.received_message.pop(key)
+        try:
+            self.received_message.pop(key)
+        except:
+            print("Key does not exist in received_message")
 
     # Wait for received_message to be updated
     def wait_for_message(self):
@@ -77,33 +78,62 @@ class Networking(Node):
     def send_message_to_node(self, node_id, message):
         # Find the specific node by its ID
         target_node = None
+        is_outbound = False
 
-        for node in self.all_nodes:
+        # Convert the message to a json object
+        json_message = {
+            "senderID": self.id,
+            "messageContent": message
+        }
+
+        # Check if target node is outbound connected
+        for node in self.nodes_outbound:
             if node.id == node_id:
+                is_outbound = True
                 target_node = node
-                #convert the message to a json object
-                json_message = {
-                    "senderID": self.id,
-                    "messageContent":message
-                }
-                # Reconnect to node (if needed)
-                self.wait_for_connection(node_id)
 
                 # Send the message to the specific node
+                self.wait_for_connection(node_id)
                 self.send_to_node(target_node, json_message)
-                print("Message sent to node:", node_id)
+
+                print(f"Message sent outbound to: {self.get_node_role(node_id)}")
                 break
+
+        # Check if target node is inbound connected
+        if not is_outbound:
+            # Get inbound-only connection nodes
+            inbound_only = list(set(self.nodes_inbound) - set(self.nodes_outbound))
+            for node in inbound_only:
+                if node.id == node_id:
+                    target_node = node
+
+                    # Send the message to the specific node
+                    self.wait_for_connection(node_id)
+                    target_node.send(json_message)
+
+                    print(f"Message sent inbound to: {self.get_node_role(node_id)}")
+                    break
+
+        # Send message through inbound connection if needed
         if target_node is None:
             print(f"Node {node_id} not found in inbound or outbound connections.")
 
-    def message_is_from_policy_engine(self, sender_id):
-        return sender_id == '3'
+    def message_is_from_access_proxy(self, sender_id):
+        return sender_id == '1'
+
+    def message_is_from_policy_decision_point(self, sender_id):
+        return sender_id == '2'
 
     def message_is_from_data_center(self, sender_id):
-        return sender_id == '5'
+        return sender_id == '3'
 
-    def process_message_from_policy_engine(self, sender, message):
-        print("\nReceived a message from Policy Engine Node")
+    def process_message_from_access_proxy(self, sender, message):
+        print("\nReceived a message from Access Proxy")
+        self.set_received_message(message)
+        self.message_updated.set()
+
+    def process_message_from_policy_decision_point(self, sender, message):
+        print("\nReceived a message from Policy Decision Point")
         self.set_received_message(message)
         self.message_updated.set()
 
@@ -151,8 +181,10 @@ class Networking(Node):
             #extract other future message attributes like unique hash, and message intent
 
         # Process the message based on the sender's ID
-        if self.message_is_from_policy_engine(sender_id):
-            self.process_message_from_policy_engine(sender_id, message_content)
+        if self.message_is_from_access_proxy(sender_id):
+            self.process_message_from_access_proxy(sender_id, message_content)
+        elif self.message_is_from_policy_decision_point(sender_id):
+            self.process_message_from_policy_decision_point(sender_id, message_content)
         elif self.message_is_from_data_center(sender_id):
             self.process_message_from_data_center(sender_id, message_content)
         else:

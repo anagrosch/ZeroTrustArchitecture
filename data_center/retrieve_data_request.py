@@ -6,7 +6,7 @@ This file also handles data requests from other nodes.
 import os
 import json
 import yaml
-from filelock import FileLock
+from filelock import FileLock, Timeout
 
 data_directory = os.path.abspath(os.path.join(os.getcwd(), 'policy_data'))
 
@@ -142,16 +142,20 @@ def load_data_with_lock(filename):
     lock = FileLock(lock_path, timeout=5)
 
     data = []
-    lock.acquire()
     try:
-        with open(file_path, 'r') as file:
-            data = json.load(file)
+        # Try to acquire lock within 5 seconds
+        with lock.acquire(timeout=5):
+            with open(file_path, 'r') as file:
+                data = json.load(file)
 
     except (json.JSONDecodeError, FileNotFoundError) as e:
         print(f"Error occurred while handling the JSON file: {e}")
 
     except IOError as e:
         print(f"Error occurred while loading the json data {e}")
+
+    except Timeout:
+        print("Failed to acquire lock within the timeout period.")
 
     finally:
         lock.release()
@@ -167,13 +171,17 @@ def dump_file_with_lock(filename, data):
     lock_path = file_path + '.lock'
     lock = FileLock(lock_path, timeout=5)
 
-    lock.acquire()
     try:
-        with open(file_path, 'w') as file:
-            json.dump(data, file, indent=4)
+        # Try to acquire lock within 5 seconds
+        with lock.acquire(timeout=5):
+            with open(file_path, 'w') as file:
+                json.dump(data, file, indent=4)
 
     except IOError as e:
         print(f"Error occurred while writing JSON data: {e}")
+
+    except Timeout:
+        print("Failed to acquire lock within the timeout period.")
 
     finally:
         lock.release()
@@ -199,7 +207,7 @@ def get_next_access_req_id():
 # Function to get the latest access decision data from the JSON file
 def get_next_access_dec_id():
     # Load data with file lock precaution
-    access_decisions, file_path = load_data_with_lock('access_decisions.json')
+    access_decisions, file_path = load_data_with_lock('access_decision.json')
 
     new_id = 1
     if access_decisions:

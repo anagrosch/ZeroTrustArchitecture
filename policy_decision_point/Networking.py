@@ -15,10 +15,9 @@ class Networking(Node):
     # Define a dictionary of the node roles based on their node.id attributes
     NODE_ROLE = {
         '1': 'Access Proxy Node',
-        '2': 'Trust Engine Node',
-        '3': 'Policy Engine Node',
-        '4': 'Web UI',
-        '5': 'Data Center Node'
+        '2': 'Policy Decision Point Node',
+        '3': 'Data Center Node',
+        '4': 'Web UI'
     }
 
     # Define a dictionary of the node [host, port] based on their node.id attributes
@@ -26,8 +25,7 @@ class Networking(Node):
         '1': ['127.0.0.1', 8001],
         '2': ['127.0.0.1', 8002],
         '3': ['127.0.0.1', 8003],
-        '4': ['127.0.0.1', 8004],
-        '5': ['127.0.0.1', 8005]
+        '4': ['127.0.0.1', 8004]
     }
 
     # Python class constructor to initialize the class Networking
@@ -122,72 +120,65 @@ class Networking(Node):
     def message_is_from_access_proxy(self, sender_id):
         return sender_id == '1'
 
-    def message_is_from_trust_engine(self, sender_id):
+    def message_is_from_policy_decision_point(self, sender_id):
         return sender_id == '2'
 
     def message_is_from_data_center(self, sender_id):
-        return sender_id == '5'
+        return sender_id == '3'
 
-    def process_message_from_access_proxy(self, sender, message):
-        print(f"\nReceived a message from Access Proxy Node [{sender}]: {message.get('intent')}")
-        # If this node is trust engine, check if the intent is 'request_trust_score'
-        if message.get('intent') == 'request_trust_score':
-            user_id = message.get('user_id')
+    # Calculate trust score for user_id
+    def request_trust_score_data(self, user_id):
+        # Set up request message
+        data = {
+            'user_id': user_id,
+            'intent': 'request_user_data'
+        }
 
-            # Get user data from data center
-            data = {
-                'user_id': user_id,
-                'intent': 'request_user_data'
-            }
+        # Ensure connection is up & send message
+        self.wait_for_connection('3')
+        self.send_message_to_node('3', data)  # send to data center
 
-            # Ensure connection is up & send message
-            self.wait_for_connection('5')
-            self.send_message_to_node('5', data)
+        # Get user data from Data Center
+        self.wait_for_message()
+        user_data = self.received_message.get('user_data')
 
-            # Get user data from Data Center
-            self.wait_for_message()
-            user_data = self.received_message.get('user_data')
+        # Send request message
+        data = {'intent': 'request_loc_configs'}
+        self.send_message_to_node('3', data)  # send to data center
 
-            # Send message
-            data = {'intent': 'request_loc_configs'}
-            self.send_message_to_node('5', data)
+        # Get policy data from Data Center
+        self.wait_for_message()
+        ta_data_str = self.received_message.get('ta_data')
+        ta_data = json.loads(ta_data_str)  # convert json string to dict
 
-            # Get policy data from Data Center
-            self.wait_for_message()
-            ta_data_str = self.received_message.get('ta_data')
-            ta_data = json.loads(ta_data_str) #convert json string to dict
+        # Clear received message dictionary
+        self.del_received_message_item('user_data')
+        self.del_received_message_item('ta_data')
 
-            #get the trust score for this user_id using the trust algorithm
-            user_trust_score = ta.calculate_overall_trust_score(user_data, ta_data)
-            print(f"Performing Trust Evaluation for the Subject({user_id})...")
-            print(f"Subject({user_id}) Trust Score: {user_trust_score}")
-            print(f"Sending the subject's trust score to Policy Engine for policy validation...")
+        return user_data, ta_data
 
-            new_id = user_data.get('new_id')
-            user_auth_data = user_data.get('latest_data')
-            data = {
-                'user_id': user_id,
-                'new_id': new_id,
-                'user_auth_data': user_auth_data,
-                'intent': 'request_access_decision',
-                'user_trust_score': user_trust_score
-            }
+    def parse_policy_decision_data(self, user_data):
+        # Retrieving user_role from user_data
+        user = user_data.get('user')
+        user_role = user.get('user_role')
+        print(f"User Role: {user_role}")
 
-            # Ensure connection is up & send message
-            self.wait_for_connection('3')
-            self.send_message_to_node('3',data)
+        new_id = user_data.get('new_id')
 
-            # Clear received message dictionary
-            self.del_received_message_item('user_data')
-            self.del_received_message_item('ta_data')
+        # Retrieving sign_in_risk from user_auth_data
+        user_auth_data = user_data.get('latest_data')
+        sign_in_risk = user_auth_data.get('sign_in_risk')
+        print(f"Sign In Risk: {sign_in_risk}")
+
+        return user_role, sign_in_risk, new_id
 
     def make_access_decision(self, user_role, user_trust_score, sign_in_risk):
         # Get policy configuration data from data center
         data = {'intent': 'request_threshold_configs'}
 
         # Ensure connection is up & send message
-        self.wait_for_connection('5')
-        self.send_message_to_node('5', data)
+        self.wait_for_connection('3')
+        self.send_message_to_node('3', data)
 
         # Get policy data from Data Center
         self.wait_for_message()
@@ -219,36 +210,34 @@ class Networking(Node):
 
         return verdict
 
-
-    def process_message_from_trust_engine(self, sender, message):
-        print(f"\nReceived a message from Trust Engine Node [{sender}]")
-        #if this node is a policy engine then check if the message intent is 'request_access_decision'
-        if message.get('intent') == 'request_access_decision':
+    def process_message_from_access_proxy(self, sender, message):
+        print(f"\nReceived a message from Access Proxy Node [{sender}]: {message.get('intent')}")
+        # If this node is trust engine, check if the intent is 'request_trust_score'
+        if message.get('intent') == 'request_trust_score':
             user_id = message.get('user_id')
-            user_trust_score = message.get('user_trust_score')
-            print(f"Received a Request for Access Decision from Trust Engine for User {user_id}")
-            print(f"Current Subject's Trust Score: {user_trust_score}")
+
+            # Get user & ta data from data center
+            user_data, ta_data = self.request_trust_score_data(user_id)
+
+            # get the trust score for this user_id using the trust algorithm
+            user_trust_score = ta.calculate_overall_trust_score(user_data, ta_data)
+            print(f"Performing Trust Evaluation for the Subject({user_id})...")
+            print(f"Subject({user_id}) Trust Score: {user_trust_score}")
+
+            # Check trust score against policies
             print(f"Checking against security policies...")
 
-             # Retrieving user_role from user_identity_data
-            user_role = message.get('user_role')
-            print(f"User Role: {user_role}")
+            # Parse user data for policy decision
+            user_role, sign_in_risk, new_id = self.parse_policy_decision_data(user_data)
 
-            # Retrieving sign_in_risk from user_auth_data
-            user_auth_data = message.get('user_auth_data')
-            sign_in_risk = user_auth_data.get('sign_in_risk')
-            print(f"Sign In Risk: {sign_in_risk}")
-
-            # Call the access decision script /function here to return the verdict
+            # Call the access decision script/function here to return the verdict
             verdict = self.make_access_decision(user_role,user_trust_score,sign_in_risk)
             print(f"Policy Engine Verdict: {verdict}")
 
-            # Send access decision to WebUI
-            self.wait_for_connection('4')
-            self.send_message_to_node('4', {'access_decision': verdict})
+            # Send access decision to WebUI through Access Proxy
+            self.wait_for_connection('1')
+            self.send_message_to_node('1', {'access_decision': verdict})
 
-             # Prepare the access decision data
-            new_id  = message.get('new_id')
             access_decision_data = {
                 'ID': new_id,
                 'user_id': user_id,
@@ -257,9 +246,38 @@ class Networking(Node):
                 'access_decision': verdict
             }
 
-            # Send access decision to DataCenter to update log
-            self.wait_for_connection('5')
-            self.send_message_to_node('5', access_decision_data)
+            # Send access decision to Data Center to update log
+            self.wait_for_connection('3')
+            self.send_message_to_node('3', access_decision_data)
+
+    def process_message_from_trust_engine(self, sender, message):
+        print(f"\nReceived a message from Trust Engine Node [{sender}]")
+        #if this node is a policy engine then check if the message intent is 'request_access_decision'
+        # if message.get('intent') == 'request_access_decision':
+            # user_id = message.get('user_id')
+            # user_trust_score = message.get('user_trust_score')
+
+
+            # user_role = message.get('user_role')
+
+            #
+            # # Send access decision to WebUI
+            # self.wait_for_connection('4')
+            # self.send_message_to_node('4', {'access_decision': verdict})
+
+            # # Prepare the access decision data
+            # new_id  = message.get('new_id')
+            # access_decision_data = {
+            #     'ID': new_id,
+            #     'user_id': user_id,
+            #     'intent': 'request_access_decision',
+            #     'user_trust_score': user_trust_score,
+            #     'access_decision': verdict
+            # }
+            #
+            # # Send access decision to DataCenter to update log
+            # self.wait_for_connection('5')
+            # self.send_message_to_node('5', access_decision_data)
 
     def process_message_from_data_center(self, sender, message):
         print("\nReceived data from Data Center Node")
@@ -308,8 +326,6 @@ class Networking(Node):
         # Process the message based on the sender's ID
         if self.message_is_from_access_proxy(sender_id):
             self.process_message_from_access_proxy(sender_id, message_content)
-        elif self.message_is_from_trust_engine(sender_id):
-            self.process_message_from_trust_engine(sender_id, message_content)
         elif self.message_is_from_data_center(sender_id):
             self.process_message_from_data_center(sender_id, message_content)
         else:

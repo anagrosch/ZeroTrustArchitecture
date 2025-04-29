@@ -13,8 +13,8 @@ node_4.debug = debug
 
 #Connect with node 1
 node_4.connect_with_node(Networking.NODE_CONNECT['1'][0], Networking.NODE_CONNECT['1'][1]) #node 1
-node_4.connect_with_node(Networking.NODE_CONNECT['5'][0], Networking.NODE_CONNECT['5'][1]) #node 5
-node_4.wait_for_connection('5')
+node_4.connect_with_node(Networking.NODE_CONNECT['3'][0], Networking.NODE_CONNECT['3'][1]) #node 3
+node_4.wait_for_connection('3')
 
 # Request current access requests log from Data Center
 data_request = {'intent': 'request_access_requests'}

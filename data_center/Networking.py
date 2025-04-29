@@ -13,11 +13,10 @@ from retrieve_data_request import *
 class Networking(Node):
     # Define a dictionary of the node roles based on their node.id attributes
     NODE_ROLE = {
-        '1':'Access Proxy Node',
-        '2':'Trust Engine Node',
-        '3':'Policy Engine Node',
-        '4':'Web UI',
-        '5':'Data Center Node'
+        '1': 'Access Proxy Node',
+        '2': 'Policy Decision Point Node',
+        '3': 'Data Center Node',
+        '4': 'Web UI'
     }
 
     # Define a dictionary of the node [host, port] based on their node.id attributes
@@ -25,8 +24,7 @@ class Networking(Node):
         '1': ['127.0.0.1', 8001],
         '2': ['127.0.0.1', 8002],
         '3': ['127.0.0.1', 8003],
-        '4': ['127.0.0.1', 8004],
-        '5': ['127.0.0.1', 8005]
+        '4': ['127.0.0.1', 8004]
     }
 
     # Python class constructor to initialize the class Networking
@@ -104,11 +102,8 @@ class Networking(Node):
     def message_is_from_access_proxy(self, sender_id):
         return sender_id == '1'
 
-    def message_is_from_trust_engine(self, sender_id):
+    def message_is_from_policy_decision_point(self, sender_id):
         return sender_id == '2'
-
-    def message_is_from_policy_engine(self, sender_id):
-        return sender_id == '3'
 
     def process_message_from_access_proxy(self, sender, message):
         print(f"\nReceived a Data Request from Access Proxy [{sender}]: {message.get('intent')}")
@@ -180,8 +175,8 @@ class Networking(Node):
             self.send_message_to_node('4', data)
 
 
-    def process_message_from_trust_engine(self, sender, message):
-        print(f"\nReceived a Data Request from Trust Engine Node: [{sender}]: {message.get('intent')}")
+    def process_message_from_policy_decision_point(self, sender, message):
+        print(f"\nReceived a Data Request from Policy Decision Point: [{sender}]: {message.get('intent')}")
         # Return user identity data for user_id
         if message.get('intent') == 'request_user_data':
             user_id = message.get('user_id')
@@ -229,18 +224,14 @@ class Networking(Node):
             self.wait_for_connection(sender)
             self.send_message_to_node(sender, data)
 
-
-    def process_message_from_policy_engine(self, sender, message):
-        print(f"\nReceived a Data Request from Policy Engine Node: [{sender}]: {message.get('intent')}")
-        # Implement logic for adding the access decision in the json file
-        if message.get('intent') == 'request_access_decision':
+        elif message.get('intent') == 'request_access_decision':
             __, access_decisions, file_path = get_next_access_dec_id()
 
             # Append the new access decision data to the existing list
             access_decisions.append(message)
 
             # Write the updated data to the JSON file
-            dump_file_with_lock('access_decisions.json', access_decisions)
+            dump_file_with_lock('access_decision.json', access_decisions)
 
         # Return policy configuration data for Policy Engine
         elif message.get('intent') == 'request_threshold_configs':
@@ -306,10 +297,8 @@ class Networking(Node):
         # Process the message based on the sender's ID
         if self.message_is_from_access_proxy(sender_id):
             self.process_message_from_access_proxy(sender_id, message_content)
-        elif self.message_is_from_trust_engine(sender_id):
-            self.process_message_from_trust_engine(sender_id, message_content)
-        elif self.message_is_from_policy_engine(sender_id):
-            self.process_message_from_policy_engine(sender_id, message_content)
+        elif self.message_is_from_policy_decision_point(sender_id):
+            self.process_message_from_policy_decision_point(sender_id, message_content)
         else:
             print(f"Received a message from an unknown sender ({sender_id}): {message_content}")
         

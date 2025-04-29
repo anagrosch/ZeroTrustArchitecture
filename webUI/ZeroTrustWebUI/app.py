@@ -1,5 +1,7 @@
+import errno
 import json
 import os
+import time
 from flask import Flask, render_template, request, jsonify, session, url_for,redirect, make_response
 import logging
 import math
@@ -156,8 +158,13 @@ def home():
                     }
 
                     # Create an instance of the Networking class
-                    node4 = Networking(Networking.NODE_CONNECT['4'][0],
-                                       Networking.NODE_CONNECT['4'][1], 4)
+                    try:
+                        node4 = Networking(Networking.NODE_CONNECT['4'][0],
+                                           Networking.NODE_CONNECT['4'][1], 4)
+                    except OSError as e:
+                        print(f"OSError: {e}")
+                        node4 = rety_webui_node()
+
                     node4.start()
                     node4.connect_with_node(Networking.NODE_CONNECT['1'][0],
                                             Networking.NODE_CONNECT['1'][1])  # connect with the access proxy
@@ -199,7 +206,24 @@ def home():
     except KeycloakAuthenticationError as e:
         print(f"KeycloakAuthenticationError: {e}")
         return redirect(url_for('index'))
-    
+
+
+# Start up node
+def rety_webui_node():
+    retries = 0
+    node4 = None
+
+    while retries < 3:
+        try:
+            node4 = Networking(Networking.NODE_CONNECT['4'][0], Networking.NODE_CONNECT['4'][1], 4)
+        except OSError as e:
+            if e.errno == errno.EADDRINUSE:
+                print("Error: Address already in use")
+                print(f"Retrying node setup {retries}/3...")
+                retries += 1
+                time.sleep(5)
+    return node4
+
 
 # Add access_request to local JSON file
 def update_local_file(access_request):
@@ -258,23 +282,32 @@ def receive_and_process_access_request():
     # Update local access requests file
     update_local_file(access_request)
 
-    # Create an instance of the Networking class (if not already up)
-    node4 = Networking(Networking.NODE_CONNECT['4'][0], Networking.NODE_CONNECT['4'][1], 4)
+    # Create an instance of the Networking class
+    try:
+        node4 = Networking(Networking.NODE_CONNECT['4'][0], Networking.NODE_CONNECT['4'][1], 4)
+    except OSError as e:
+        print(f"OSError: {e}")
+        node4 = rety_webui_node()
+
     node4.start()
     node4.connect_with_node(Networking.NODE_CONNECT['1'][0],
                             Networking.NODE_CONNECT['1'][1]) #connect with the access proxy
-    node4.connect_with_node(Networking.NODE_CONNECT['3'][0],
-                            Networking.NODE_CONNECT['3'][1]) # connect with the policy engine
-    node4.wait_for_connection('3') #ensure policy engine connected
 
     # Send access request to access proxy & add to JSON file
     node4.send_message_to_node('1', access_request)
     node4.wait_for_message()
 
-    policy_engine_verdict = node4.received_message.get('access_decision')
+    # Resend message if node disconnected
+    is_disconnected = node4.received_message.get('disconnect', False)
+    if is_disconnected:
+        node4.send_message_to_node('1', access_request)
+        node4.wait_for_message()
+
+    policy_engine_verdict = node4.received_message.get('access_decision', 0) #default to not approved
     print(f"Policy Engine Verdict: {policy_engine_verdict}")
 
     # Clear received message dictionary
+    node4.del_received_message_item('disconnect')
     node4.del_received_message_item('access_decision')
     node4.stop()
 
@@ -312,13 +345,15 @@ def receive_policy_configurations():
             print(f"{key}: {value}")
 
         # First create an instance of the Networking class
-        node4 = Networking(Networking.NODE_CONNECT['4'][0], Networking.NODE_CONNECT['4'][1], 4)
+        try:
+            node4 = Networking(Networking.NODE_CONNECT['4'][0], Networking.NODE_CONNECT['4'][1], 4)
+        except OSError as e:
+            print(f"OSError: {e}")
+            node4 = rety_webui_node()
+
         node4.start()
         node4.connect_with_node(Networking.NODE_CONNECT['1'][0],
                                 Networking.NODE_CONNECT['1'][1])  # connect with the access proxy
-        node4.connect_with_node(Networking.NODE_CONNECT['5'][0],
-                                Networking.NODE_CONNECT['5'][1])  # connect with the policy engine
-        node4.wait_for_connection('5')  # ensure policy engine connected
 
         # Send updated policy configurations to Data Center
         policy_configs = {
@@ -328,9 +363,16 @@ def receive_policy_configurations():
         node4.send_message_to_node('1', policy_configs)
         node4.wait_for_message()
 
+        # Resend message if node disconnected
+        is_disconnected = node4.received_message.get('disconnect', False)
+        if is_disconnected:
+            node4.send_message_to_node('1', policy_configs)
+            node4.wait_for_message()
+
         status = node4.received_message.get('status')
 
         # Clear received message dictionary
+        node4.del_received_message_item('disconnected')
         node4.del_received_message_item('status')
         node4.stop()
 
